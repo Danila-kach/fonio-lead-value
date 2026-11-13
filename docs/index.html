@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fonio lead value</title>
+<meta name="description" content="Interactive view of the lead-value model: what Meta and Google Ads are told a signup is worth, and how that compares with what the signups really brought.">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="data.js"></script>
+<style>
+  :root{--bg:#fcfcfb;--surface:#ffffff;--ink:#0b0b0b;--ink2:#52514e;--muted:#8a8984;--line:#e4e3de;--blue:#2a78d6;--blue2:#6ea6e6;--blue3:#c7dcf5;--gray:#9a9892;--grayfill:#e6e5e0;--orange:#eb6834;--green:#1baf7a;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
+  .wrap{max-width:1180px;margin:0 auto;padding:24px 16px 64px}
+  h1{font-size:26px;margin:0 0 4px}
+  h2{font-size:19px;margin:36px 0 6px}
+  p{margin:6px 0 10px;color:var(--ink2);max-width:860px}
+  .sub{color:var(--ink2);margin:0 0 18px}
+  .controls{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin:14px 0 8px;padding:12px 14px;background:var(--surface);border:1px solid var(--line);border-radius:10px;position:sticky;top:0;z-index:5}
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .seg button{border:0;background:var(--surface);color:var(--ink2);padding:7px 14px;cursor:pointer;font:inherit}
+  .seg button.on{background:var(--blue);color:#fff}
+  .lbl{font-size:13px;color:var(--muted);margin-right:4px}
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:14px 0}
+  .tile{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+  .tile .k{font-size:12px;color:var(--muted)} .tile .v{font-size:26px;font-weight:700;margin:2px 0} .tile .d{font-size:13px;color:var(--ink2)}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:10px 0;overflow-x:auto}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:14px} @media(max-width:860px){.row{grid-template-columns:1fr}}
+  canvas{max-width:100%}
+  table{border-collapse:collapse;width:100%;font-size:13.5px}
+  th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+  th{color:var(--ink2);font-weight:600;cursor:pointer;white-space:nowrap} th.sorted{color:var(--blue)}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+  .pill{display:inline-block;padding:1px 8px;border-radius:999px;font-size:12px;background:var(--blue3)} .pill.top{background:var(--blue);color:#fff} .pill.mid{background:var(--blue2);color:#fff}
+  input[type=range]{width:100%}
+  select,input[type=number]{font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink)}
+  .grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+  .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:3px}
+  .field select,.field input{width:100%}
+  .chk{display:flex;align-items:center;gap:8px;font-size:14px;margin-top:6px}
+  .big{font-size:34px;font-weight:700} .calc-out{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:12px 0}
+  .bar{height:10px;background:var(--line);border-radius:5px;overflow:hidden} .bar i{display:block;height:100%;background:var(--blue)}
+  .contrib{font-size:13px} .contrib div{display:grid;grid-template-columns:230px 1fr 60px;gap:8px;align-items:center;padding:3px 0}
+  .contrib .track{position:relative;height:10px;background:var(--line);border-radius:5px} .contrib .track i{position:absolute;top:0;height:100%;border-radius:5px}
+  .note{font-size:13px;color:var(--muted)}
+  .filters{display:flex;flex-wrap:wrap;gap:10px;margin:8px 0 12px} .filters select{min-width:150px}
+  .pager{display:flex;gap:8px;align-items:center;margin-top:10px;font-size:13px;color:var(--ink2)} .pager button{font:inherit;padding:4px 10px;border:1px solid var(--line);background:var(--surface);border-radius:6px;cursor:pointer}
+  a{color:var(--blue)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>What is a Fonio signup worth?</h1>
+  <p class="sub">The lead-value model, scored 72 hours after signup, on the February–March 2026 test signups the model was not trained on. Switch platform and scoring moment, drag the slider, try the calculator.</p>
+
+  <div class="controls">
+    <span class="lbl">Platform</span>
+    <div class="seg" id="platform"><button data-v="meta" class="on">Meta</button><button data-v="google">Google Ads</button></div>
+    <span class="lbl">Scored at</span>
+    <div class="seg" id="horizon"><button data-v="v24">24 hours</button><button data-v="v72" class="on">72 hours</button></div>
+    <span class="note" id="trainnote"></span>
+  </div>
+
+  <div class="tiles" id="tiles"></div>
+
+  <h2>1. What the platform is told a signup is worth</h2>
+  <p>Today every signup is sent as equal. With the model, each signup carries its own value in euros. Every bar is one test signup, sorted by the value the model sends; the dashed line is today. Hover a bar to see what that signup did and what it really brought.</p>
+  <div class="card"><canvas id="sorted" height="110"></canvas></div>
+
+  <h2>2. If the platform chased only the best signups</h2>
+  <p>Drag to pick how many of the signups, highest value first, and see how much of the real revenue and how many of the paying customers sit inside that group. Today any group of the same size holds a share equal to its size.</p>
+  <div class="card">
+    <input type="range" id="share" min="5" max="100" step="5" value="30">
+    <div class="tiles" id="sharetiles"></div>
+  </div>
+
+  <h2>3. Thirds of signups by predicted value</h2>
+  <p>The signups split into three equal groups by the value the model sends, with what they really did and what they look like.</p>
+  <div class="card"><table id="thirds"></table></div>
+
+  <h2>4. Value calculator: what would the model send for this signup?</h2>
+  <p>Describe a signup as it looks 72 hours after signup. The model gives the chance of paying, the expected revenue if they pay, and the value (chance × revenue). The bars show which facts pushed the chance up or down.</p>
+  <div class="card">
+    <div class="grid3" id="calcform"></div>
+    <div class="calc-out" id="calcout"></div>
+    <div class="contrib" id="contrib"></div>
+  </div>
+
+  <h2>5. The weights the model learned</h2>
+  <p>Step 1, "will they pay?": positive pushes the chance up. Step 2, "if they pay, how much?": in euros. Weights are comparable within a column because every feature was put on the same scale before training.</p>
+  <div class="card"><table id="weights"></table></div>
+
+  <h2>6. Every test signup</h2>
+  <p>Filter and sort. Value is what the model would send; "really brought" is the revenue over 180 days.</p>
+  <div class="card">
+    <div class="filters" id="filters"></div>
+    <table id="signups"></table>
+    <div class="pager" id="pager"></div>
+  </div>
+
+  <p class="note" style="margin-top:28px">Built from <code>outputs/scored_test_set.csv</code> and the trained model parameters; the numbers match the write-up and the notebook. Dataset is synthetic (Fonio case study).</p>
+</div>
+
+<script>
+(function(){
+  const D = window.FONIO;
+  const C = {blue:'#2a78d6', blue2:'#6ea6e6', blue3:'#c7dcf5', gray:'#9a9892', grayfill:'#e6e5e0', ink:'#0b0b0b', ink2:'#52514e'};
+  let platform = 'meta', hz = 'v72';
+  const eur = v => '€ ' + Math.round(v).toLocaleString('en-US');
+  const pct = v => Math.round(v*100) + '%';
+  const fmt1 = v => (Math.round(v*10)/10).toFixed(1);
+  const NAMES = {business_email:'business email', signup_hour:'signup hour', signup_dow:'signup weekday', phone_connected_24h:'phone connected (24h)', assistant_configured_24h:'assistant configured (24h)', test_calls_72h:'test calls (72h)', calendar_connected_72h:'calendar connected (72h)', paid_by_h:'already paid by 72h'};
+  const nice = k => NAMES[k] || k.replace('plan_by_h_','paid by 72h on plan: ').replace('company_size_','company size: ').replace('industry_','industry: ').replace('country_','country: ').replace('device_','device: ').replace('channel_','channel: ').replace(/_/g,' ');
+
+  function P(){ return D.platforms[platform]; }
+  function rows(){ return P().signups.map(r => ({...r, v: r[hz]})); }
+  function sorted(){ return rows().sort((a,b)=>b.v-a.v); }
+
+  // ---------- tiles ----------
+  function tiles(){
+    const rs = sorted(); const n = rs.length; const tot = rs.reduce((s,r)=>s+r.rev,0);
+    const top30 = rs.slice(0, Math.round(n*0.3)).reduce((s,r)=>s+r.rev,0)/tot;
+    const third = Math.floor(n/3);
+    const topRev = rs.slice(0,third).reduce((s,r)=>s+r.rev,0)/third, botRev = rs.slice(n-third).reduce((s,r)=>s+r.rev,0)/third;
+    const avg = tot/n, predAvg = rs.reduce((s,r)=>s+r.v,0)/n;
+    document.getElementById('tiles').innerHTML = [
+      ['Test signups', n.toLocaleString(), P().label + ', Feb–Mar 2026'],
+      ['Revenue in the top 30% of signups', pct(top30), 'today: 30%'],
+      ['Real revenue per signup, top third', eur(topRev), 'average: ' + eur(avg) + ' · bottom third: ' + eur(botRev)],
+      ['Predicted vs real, average per signup', eur(predAvg) + ' vs ' + eur(avg), 'the euro number can be trusted'],
+    ].map(t => `<div class="tile"><div class="k">${t[0]}</div><div class="v">${t[1]}</div><div class="d">${t[2]}</div></div>`).join('');
+    document.getElementById('trainnote').textContent = `trained on ${P().n_train.toLocaleString()} ${P().label} signups (Oct 2025 – Jan 2026), ${P().n_train_payers} of them paid`;
+  }
+
+  // ---------- sorted chart ----------
+  let sortedChart;
+  function sortedChartDraw(){
+    const rs = sorted().slice().reverse(); const n = rs.length; const third = Math.floor(n/3);
+    const avg = rs.reduce((s,r)=>s+r.rev,0)/n;
+    const colors = rs.map((_,i)=> i < third ? C.blue3 : i < 2*third ? C.blue2 : C.blue);
+    const ctx = document.getElementById('sorted');
+    if (sortedChart) sortedChart.destroy();
+    sortedChart = new Chart(ctx, {type:'bar', data:{labels: rs.map((_,i)=>i+1), datasets:[
+      {label:'Value the model sends (€)', data: rs.map(r=>r.v), backgroundColor: colors, borderWidth:0, barPercentage:1, categoryPercentage:1, order:2},
+      {label:'Today: every signup counts the same (average €' + Math.round(avg) + ')', type:'line', data: rs.map(()=>avg), borderColor: C.gray, borderDash:[6,4], borderWidth:2, pointRadius:0, order:1}
+    ]}, options:{animation:false, responsive:true, interaction:{mode:'index', intersect:false},
+      scales:{x:{display:true, title:{display:true, text:`${n} test signups, sorted by the value the model sends (left: bottom third, right: top third)`, color:C.ink2}, ticks:{maxTicksLimit:9, color:C.ink2}, grid:{display:false}},
+              y:{title:{display:true, text:'Value of a signup (€)', color:C.ink2}, grid:{color:'#eeede8'}, ticks:{color:C.ink2}}},
+      plugins:{legend:{labels:{color:C.ink2, boxWidth:14}}, tooltip:{callbacks:{
+        title: items => { const r = rs[items[0].dataIndex]; return `${r.id} · ${r.ind}, company of ${r.cs}, ${r.dev}` },
+        label: item => { const r = rs[item.dataIndex]; if (item.datasetIndex===1) return null;
+          return [`model sends: ${eur(r.v)} (chance to pay ${pct(r.p)} × ${eur(r.rip)} if they pay)`,
+                  `phone ${r.ph?'yes':'no'} · assistant ${r.as?'yes':'no'} · test calls ${r.tc} · calendar ${r.cal?'yes':'no'} · business email ${r.be?'yes':'no'}${r.pb?' · already paid ('+r.pl+')':''}`,
+                  `really: ${r.paid?'paid, brought '+eur(r.rev):'did not pay'}`]; }}}}}});
+  }
+
+  // ---------- share slider ----------
+  function shareDraw(){
+    const s = +document.getElementById('share').value/100; const rs = sorted(); const n = rs.length;
+    const k = Math.round(n*s); const grp = rs.slice(0,k);
+    const tot = rs.reduce((a,r)=>a+r.rev,0), payers = rs.filter(r=>r.paid).length;
+    const rev = grp.reduce((a,r)=>a+r.rev,0)/tot, pay = grp.filter(r=>r.paid).length/payers;
+    const revPer = grp.reduce((a,r)=>a+r.rev,0)/k, avg = tot/n;
+    document.getElementById('sharetiles').innerHTML = [
+      ['Signups taken', `${pct(s)}`, `${k} of ${n}, highest value first`],
+      ['Share of all revenue inside this group', pct(rev), `today: ${pct(s)}`],
+      ['Share of all paying customers inside', pct(pay), `today: ${pct(s)}`],
+      ['Revenue per signup in this group', eur(revPer), `today: ${eur(avg)} for every group`],
+    ].map(t => `<div class="tile"><div class="k">${t[0]}</div><div class="v">${t[1]}</div><div class="d">${t[2]}</div></div>`).join('');
+  }
+
+  // ---------- thirds ----------
+  function thirds(){
+    const rs = sorted(); const n = rs.length; const t = Math.floor(n/3);
+    const groups = [['Top third', rs.slice(0,t), 'top'], ['Middle third', rs.slice(t,2*t), 'mid'], ['Bottom third', rs.slice(2*t), '']];
+    const mean = (a,f)=>a.reduce((s,r)=>s+f(r),0)/a.length;
+    const all = rs;
+    const head = `<tr><th></th><th class="num">Signups</th><th class="num">Value sent, avg</th><th class="num">Paid within 30d</th><th class="num">Really brought, per signup</th><th class="num">Phone connected</th><th class="num">Calendar connected</th><th class="num">Test calls, avg</th><th class="num">Business email</th><th class="num">One-person companies</th></tr>`;
+    const line = (name, a, cls) => `<tr><td><span class="pill ${cls}">${name}</span></td><td class="num">${a.length}</td><td class="num">${eur(mean(a,r=>r.v))}</td><td class="num">${pct(mean(a,r=>r.paid))}</td><td class="num">${eur(mean(a,r=>r.rev))}</td><td class="num">${pct(mean(a,r=>r.ph))}</td><td class="num">${pct(mean(a,r=>r.cal))}</td><td class="num">${fmt1(mean(a,r=>r.tc))}</td><td class="num">${pct(mean(a,r=>r.be))}</td><td class="num">${pct(mean(a,r=>r.cs==='1'))}</td></tr>`;
+    document.getElementById('thirds').innerHTML = head + groups.map(g=>line(g[0],g[1],g[2])).join('') + `<tr><td style="white-space:nowrap"><b>Today: all signups</b></td><td class="num">${n}</td><td class="num">same for all</td><td class="num">${pct(mean(all,r=>r.paid))}</td><td class="num">${eur(mean(all,r=>r.rev))}</td><td class="num">${pct(mean(all,r=>r.ph))}</td><td class="num">${pct(mean(all,r=>r.cal))}</td><td class="num">${fmt1(mean(all,r=>r.tc))}</td><td class="num">${pct(mean(all,r=>r.be))}</td><td class="num">${pct(mean(all,r=>r.cs==='1'))}</td></tr>`;
+  }
+
+  // ---------- calculator ----------
+  const calc = {country:'DE', industry:'trades', company_size:'2-5', device:'mobile', business_email:1, signup_hour:10, signup_dow:1, phone:1, assistant:1, test_calls:2, calendar:0, paid:0, plan:'none'};
+  function calcForm(){
+    const sel = (k, opts, lab) => `<div class="field"><label>${lab}</label><select data-k="${k}">${opts.map(o=>`<option ${String(calc[k])===String(o)?'selected':''}>${o}</option>`).join('')}</select></div>`;
+    const chk = (k, lab) => `<label class="chk"><input type="checkbox" data-k="${k}" ${calc[k]?'checked':''}> ${lab}</label>`;
+    document.getElementById('calcform').innerHTML =
+      sel('country', D.options.country, 'country') + sel('industry', D.options.industry, 'industry') + sel('company_size', D.options.company_size, 'company size') + sel('device', D.options.device, 'device') +
+      `<div class="field"><label>test calls in 72h</label><input type="number" min="0" max="20" data-k="test_calls" value="${calc.test_calls}"></div>` +
+      `<div class="field"><label>signup hour (0–23)</label><input type="number" min="0" max="23" data-k="signup_hour" value="${calc.signup_hour}"></div>` +
+      `<div>${chk('business_email','business email')}${chk('phone','phone connected in 24h')}${chk('assistant','assistant configured in 24h')}</div>` +
+      `<div>${chk('calendar','calendar connected in 72h')}${chk('paid','already paid by 72h')}<div class="field" style="margin-top:6px"><label>plan, if already paid</label><select data-k="plan"><option>none</option><option>starter</option><option>pro</option><option>business</option></select></div></div>`;
+    document.getElementById('calcform').querySelectorAll('select,input').forEach(el => el.addEventListener('input', e => {
+      const k = el.dataset.k; calc[k] = el.type==='checkbox' ? (el.checked?1:0) : (el.type==='number' ? +el.value : el.value); calcRun();
+    }));
+  }
+  function vector(mp){
+    const x = {}; mp.columns.forEach(c => x[c]=0);
+    const set = (c,v)=>{ if (c in x) x[c]=v; };
+    set('business_email', calc.business_email); set('signup_hour', calc.signup_hour); set('signup_dow', calc.signup_dow);
+    set('phone_connected_24h', calc.phone); set('assistant_configured_24h', calc.assistant); set('test_calls_72h', calc.test_calls); set('calendar_connected_72h', calc.calendar);
+    const paid = calc.paid && calc.plan!=='none' ? 1 : 0; set('paid_by_h', paid);
+    set('country_'+calc.country,1); set('industry_'+calc.industry,1); set('company_size_'+calc.company_size,1); set('device_'+calc.device,1);
+    set('channel_'+(platform==='meta'?'meta':'google_search'),1); set('plan_by_h_'+(paid?calc.plan:'none'),1);
+    return mp.columns.map(c=>x[c]);
+  }
+  function calcRun(){
+    const mp = P().model72; const x = vector(mp);
+    const z1 = x.map((v,i)=>(v-mp.s1.mean[i])/mp.s1.scale[i]); const contrib = z1.map((z,i)=>z*mp.s1.coef[i]);
+    const logit = mp.s1.intercept + contrib.reduce((a,b)=>a+b,0); const p = 1/(1+Math.exp(-logit));
+    const z2 = x.map((v,i)=>(v-mp.s2.mean[i])/mp.s2.scale[i]); const rev = Math.max(mp.min_payer_revenue, mp.s2.intercept + z2.reduce((a,z,i)=>a+z*mp.s2.coef[i],0));
+    const value = p*rev;
+    document.getElementById('calcout').innerHTML = [
+      ['Chance of paying within 30 days', pct(p)], ['Revenue if they pay (180 days)', eur(rev)], ['Value sent to ' + P().label, `<span class="big">${eur(value)}</span>`]
+    ].map(t=>`<div class="tile"><div class="k">${t[0]}</div><div class="v">${t[1]}</div></div>`).join('');
+    const items = contrib.map((c,i)=>({k:mp.columns[i], c})).filter(o=>Math.abs(o.c)>0.02 && !o.k.startsWith('channel_')).sort((a,b)=>Math.abs(b.c)-Math.abs(a.c)).slice(0,8);
+    const mx = Math.max(0.5, ...items.map(o=>Math.abs(o.c)));
+    document.getElementById('contrib').innerHTML = `<div style="color:var(--muted);font-size:12px"><span>What pushed the chance of paying</span><span></span><span></span></div>` + items.map(o=>{
+      const w = Math.abs(o.c)/mx*50; const left = o.c<0 ? 50-w : 50;
+      return `<div><span>${nice(o.k)}${o.k.startsWith('plan_by_h_')||o.k.startsWith('company_size_')||o.k.startsWith('industry_')||o.k.startsWith('country_')||o.k.startsWith('device_')?'':''}</span><div class="track"><i style="left:${left}%;width:${w}%;background:${o.c<0?'#eb6834':'#2a78d6'}"></i></div><span style="text-align:right;color:${o.c<0?'#eb6834':'#2a78d6'}">${o.c>0?'+':''}${o.c.toFixed(2)}</span></div>`;
+    }).join('');
+  }
+
+  // ---------- weights ----------
+  function weights(){
+    const mp = P().model72; const rowsW = mp.columns.map((c,i)=>({k:c, a:mp.s1.coef[i], b:mp.s2.coef[i]})).filter(o=>!o.k.startsWith('channel_') || o.k==='channel_google_pmax').sort((x,y)=>y.a-x.a);
+    document.getElementById('weights').innerHTML = `<tr><th>Feature</th><th class="num">Step 1: will they pay?</th><th class="num">Step 2: € if they pay</th></tr>` +
+      rowsW.map(o=>`<tr><td>${nice(o.k)}</td><td class="num" style="color:${o.a<0?'#eb6834':'#2a78d6'}">${o.a>0?'+':''}${o.a.toFixed(2)}</td><td class="num" style="color:${o.b<0?'#eb6834':'#2a78d6'}">${o.b>0?'+':''}${Math.round(o.b)}</td></tr>`).join('');
+  }
+
+  // ---------- signups table ----------
+  let sortKey='v', sortDir=-1, page=0; const PAGE=25; const flt={ind:'', cs:'', beh:''};
+  function filtersDraw(){
+    const inds = [...new Set(P().signups.map(r=>r.ind))].sort(); const css = [...new Set(P().signups.map(r=>r.cs))].sort();
+    document.getElementById('filters').innerHTML =
+      `<select data-f="ind"><option value="">all industries</option>${inds.map(i=>`<option ${flt.ind===i?'selected':''}>${i}</option>`).join('')}</select>` +
+      `<select data-f="cs"><option value="">all company sizes</option>${css.map(i=>`<option ${flt.cs===i?'selected':''}>${i}</option>`).join('')}</select>` +
+      `<select data-f="beh"><option value="">all behaviour</option><option value="none" ${flt.beh==='none'?'selected':''}>did nothing in 24h</option><option value="phone" ${flt.beh==='phone'?'selected':''}>phone connected</option><option value="cal" ${flt.beh==='cal'?'selected':''}>calendar connected</option><option value="paid" ${flt.beh==='paid'?'selected':''}>already paid by 72h</option></select>`;
+    document.getElementById('filters').querySelectorAll('select').forEach(el=>el.addEventListener('change',()=>{flt[el.dataset.f]=el.value; page=0; tableDraw();}));
+  }
+  function tableDraw(){
+    let rs = rows().filter(r => (!flt.ind || r.ind===flt.ind) && (!flt.cs || r.cs===flt.cs) &&
+      (!flt.beh || (flt.beh==='none' && !r.ph && !r.as) || (flt.beh==='phone' && r.ph) || (flt.beh==='cal' && r.cal) || (flt.beh==='paid' && r.pb)));
+    rs.sort((a,b)=> (a[sortKey]>b[sortKey]?1:a[sortKey]<b[sortKey]?-1:0)*sortDir);
+    const cols = [['id','signup'],['date','date'],['ind','industry'],['cs','size'],['dev','device'],['be','biz email'],['ph','phone'],['as','assistant'],['tc','test calls'],['cal','calendar'],['pb','paid by 72h'],['v','value sent','num'],['paid','really paid','num'],['rev','really brought','num']];
+    const yn = v => v ? 'yes' : '·';
+    const head = `<tr>${cols.map(c=>`<th class="${c[2]||''} ${sortKey===c[0]?'sorted':''}" data-k="${c[0]}">${c[1]}${sortKey===c[0]?(sortDir<0?' ↓':' ↑'):''}</th>`).join('')}</tr>`;
+    const pg = rs.slice(page*PAGE, page*PAGE+PAGE);
+    document.getElementById('signups').innerHTML = head + pg.map(r=>`<tr><td>${r.id}</td><td>${r.date}</td><td>${r.ind}</td><td>${r.cs}</td><td>${r.dev}</td><td>${yn(r.be)}</td><td>${yn(r.ph)}</td><td>${yn(r.as)}</td><td>${r.tc}</td><td>${yn(r.cal)}</td><td>${r.pb?r.pl:'·'}</td><td class="num"><b>${eur(r.v)}</b></td><td class="num">${r.paid?'yes':'no'}</td><td class="num">${eur(r.rev)}</td></tr>`).join('');
+    document.getElementById('signups').querySelectorAll('th').forEach(th=>th.addEventListener('click',()=>{ const k=th.dataset.k; if(sortKey===k) sortDir*=-1; else {sortKey=k; sortDir=-1;} tableDraw(); }));
+    const pages = Math.max(1, Math.ceil(rs.length/PAGE));
+    document.getElementById('pager').innerHTML = `<button id="prev">‹</button><span>page ${page+1} of ${pages} · ${rs.length} signups</span><button id="next">›</button>`;
+    document.getElementById('prev').onclick=()=>{ if(page>0){page--; tableDraw();} }; document.getElementById('next').onclick=()=>{ if(page<pages-1){page++; tableDraw();} };
+  }
+
+  function redraw(){ tiles(); sortedChartDraw(); shareDraw(); thirds(); calcRun(); weights(); filtersDraw(); tableDraw(); }
+  document.querySelectorAll('#platform button').forEach(b=>b.addEventListener('click',()=>{ document.querySelectorAll('#platform button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); platform=b.dataset.v; page=0; redraw(); }));
+  document.querySelectorAll('#horizon button').forEach(b=>b.addEventListener('click',()=>{ document.querySelectorAll('#horizon button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); hz=b.dataset.v; redraw(); }));
+  document.getElementById('share').addEventListener('input', shareDraw);
+  calcForm(); redraw();
+})();
+</script>
+</body>
+</html>
