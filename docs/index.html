@@ -51,13 +51,11 @@
 <body>
 <div class="wrap">
   <h1>What is a Fonio signup worth?</h1>
-  <p class="sub">The lead-value model, scored 72 hours after signup, on the February–March 2026 test signups the model was not trained on. Switch platform and scoring moment, drag the slider, try the calculator.</p>
+  <p class="sub">The lead-value model, scored 72 hours after signup, on the February–March 2026 test signups the model was not trained on. Switch platform, drag the slider, try the calculator.</p>
 
   <div class="controls">
     <span class="lbl">Platform</span>
     <div class="seg" id="platform"><button data-v="meta" class="on">Meta</button><button data-v="google">Google Ads</button></div>
-    <span class="lbl">Scored at</span>
-    <div class="seg" id="horizon"><button data-v="v24">24 hours</button><button data-v="v72" class="on">72 hours</button></div>
     <span class="note" id="trainnote"></span>
   </div>
 
@@ -105,7 +103,7 @@
 (function(){
   const D = window.FONIO;
   const C = {blue:'#2a78d6', blue2:'#6ea6e6', blue3:'#c7dcf5', gray:'#9a9892', grayfill:'#e6e5e0', ink:'#0b0b0b', ink2:'#52514e'};
-  let platform = 'meta', hz = 'v72';
+  let platform = 'meta'; const hz = 'v72';
   const eur = v => '€ ' + Math.round(v).toLocaleString('en-US');
   const pct = v => Math.round(v*100) + '%';
   const fmt1 = v => (Math.round(v*10)/10).toFixed(1);
@@ -256,7 +254,6 @@
 
   function redraw(){ tiles(); sortedChartDraw(); shareDraw(); thirds(); calcRun(); weights(); filtersDraw(); tableDraw(); }
   document.querySelectorAll('#platform button').forEach(b=>b.addEventListener('click',()=>{ document.querySelectorAll('#platform button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); platform=b.dataset.v; page=0; redraw(); }));
-  document.querySelectorAll('#horizon button').forEach(b=>b.addEventListener('click',()=>{ document.querySelectorAll('#horizon button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); hz=b.dataset.v; redraw(); }));
   document.getElementById('share').addEventListener('input', shareDraw);
   calcForm(); redraw();
 })();
