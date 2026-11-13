@@ -11,7 +11,7 @@ ad platforms, what data setup runs it, and how to prove it works.
 
 1. **`docs/writeup.pdf`**: two pages, answers to all four tasks in the order they were asked.
 2. **Interactive dashboard**: https://danila-kach.github.io/fonio-lead-value/ (switch Meta / Google Ads, drag the slider, try the value calculator, browse every test signup).
-3. **`notebooks/lead_value_model.ipynb`**: Task 1 in full, with the data, the model, every check and every number. Each step is explained in plain language before the code. `lead_value_model.html` is the same notebook as a web page, no setup needed.
+3. **`notebooks/lead_value_model.ipynb`**: Task 1 in full, with the data, the model, every check and every number. Each step is explained in plain language before the code; GitHub shows it with all tables and charts, no setup needed.
 
 ## The result in one table
 
@@ -39,7 +39,7 @@ Trained on signups from October 2025 to January 2026, tested on February and Mar
 ```
 docs/writeup.pdf                  the 2-page write-up
 docs/index.html + docs/data.js    the interactive dashboard (served by GitHub Pages from this folder)
-notebooks/lead_value_model.ipynb  Task 1 notebook (executed) + .html copy
+notebooks/lead_value_model.ipynb  Task 1 notebook, executed, with all outputs
 data/fonio_case_signups.csv       the case dataset
 src/features.py                   which facts are known at 24h / 72h, and which columns are excluded
 src/model.py                      the two-step model

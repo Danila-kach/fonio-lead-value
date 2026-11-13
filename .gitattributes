@@ -1,5 +1,4 @@
 # generated files: keep them out of GitHub's language statistics
-notebooks/lead_value_model.html linguist-generated=true
 docs/data.js linguist-generated=true
 outputs/results.json linguist-generated=true
 outputs/scored_test_set.csv linguist-generated=true
