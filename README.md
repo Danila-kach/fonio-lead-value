@@ -1,5 +1,7 @@
 # Fonio case study: what is a signup worth?
 
+**Interactive dashboard: https://danila-kach.github.io/fonio-lead-value/**
+
 Meta and Google Ads optimise for signups, but signups are not equal. This
 project builds a model that, 72 hours after signup, predicts how much a
 signup is worth in euros, and explains how to send that value back to the
@@ -8,7 +10,7 @@ ad platforms, what data setup runs it, and how to prove it works.
 ## Start here
 
 1. **`docs/writeup.pdf`**: two pages, answers to all four tasks in the order they were asked.
-2. **Interactive dashboard**: https://danila-kach.github.io/fonio-lead-value/ (switch Meta / Google Ads and 24h / 72h, drag the slider, try the value calculator, browse every test signup).
+2. **Interactive dashboard**: https://danila-kach.github.io/fonio-lead-value/ (switch Meta / Google Ads, drag the slider, try the value calculator, browse every test signup).
 3. **`notebooks/lead_value_model.ipynb`**: Task 1 in full, with the data, the model, every check and every number. Each step is explained in plain language before the code. `lead_value_model.html` is the same notebook as a web page, no setup needed.
 
 ## The result in one table
@@ -36,7 +38,7 @@ Trained on signups from October 2025 to January 2026, tested on February and Mar
 
 ```
 docs/writeup.pdf                  the 2-page write-up
-docs/index.html + docs/data.js    the interactive dashboard (served by GitHub Pages)
+docs/index.html + docs/data.js    the interactive dashboard (served by GitHub Pages from this folder)
 notebooks/lead_value_model.ipynb  Task 1 notebook (executed) + .html copy
 data/fonio_case_signups.csv       the case dataset
 src/features.py                   which facts are known at 24h / 72h, and which columns are excluded
@@ -44,6 +46,7 @@ src/model.py                      the two-step model
 src/evaluate.py                   the checks: revenue captured by the top 30%, thirds, calibration
 src/run_experiments.py            runs every comparison and writes outputs/results.json
 src/make_figures.py               draws the charts in outputs/figures/
+src/export_dashboard.py           writes docs/data.js, the data and model parameters behind the dashboard
 outputs/results.json              every number used in the write-up and notebook
 outputs/scored_test_set.csv       the Feb-Mar signups with the model's value and the real outcome
 outputs/figures/                  charts and the Task 3 diagram
@@ -56,6 +59,7 @@ requirements.txt                  the Python libraries needed to run the code
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 .venv/bin/python src/run_experiments.py
 .venv/bin/python src/make_figures.py
+.venv/bin/python src/export_dashboard.py
 ```
 
 ## Tooling
